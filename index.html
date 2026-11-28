@@ -1,14 +1,631 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#070b14" />
+  <title>Mosquito Smash</title>
+  <style>
+    :root {
+      --bg: #070b14;
+      --panel: #10182a;
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --text: #f3f6fc;
+      --muted: #9aa7be;
+      --accent: #facc15;
+      --accent-hover: #eab308;
+      --danger: #ef4444;
+      --hit: #22c55e;
+    }
 
-SCORE
-0
-BEST
-0
-ESCAPED
-0 / 5
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
 
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Gujarati", sans-serif;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
 
-મચ્છર પર ટૅપ કરો • 5 મચ્છર છટકે = Game Over
-🦟 Mosquito Smash
-સૂતા માણસને મચ્છરોથી બચાવો! મચ્છર પર ટૅપ કરીને shotgun ચલાવો.
-START GAME
-મચ્છર એક પછી એક અલગ દિશાથી આવશે અને ધીમે ધીમે ઝડપી થશે.
+    .app {
+      position: relative;
+      width: 100%;
+      height: 100dvh;
+      max-width: 520px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 14px 16px 12px;
+    }
+
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      z-index: 20;
+    }
+
+    .stat-box {
+      background: rgba(16, 24, 42, 0.9);
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      padding: 10px 8px;
+      text-align: center;
+      backdrop-filter: blur(8px);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      margin-top: 2px;
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1.15;
+      color: var(--text);
+    }
+
+    .stat-value.danger {
+      color: var(--danger);
+    }
+
+    .arena {
+      position: relative;
+      flex: 1;
+      margin: 12px 0;
+      border-radius: 22px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 62%, rgba(250, 204, 21, 0.08), transparent 48%),
+        linear-gradient(180deg, #0b1120 0%, #070b14 100%);
+      border: 1px solid var(--panel-border);
+    }
+
+    .sleeper-zone {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      text-align: center;
+      pointer-events: none;
+      z-index: 5;
+      opacity: 0.72;
+    }
+
+    .sleeper-emoji {
+      font-size: 34px;
+      line-height: 1;
+    }
+
+    .sleeper-text {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .mosquito {
+      position: absolute;
+      width: 66px;
+      height: 66px;
+      margin-left: -33px;
+      margin-top: -33px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      cursor: pointer;
+      z-index: 10;
+      filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.55));
+      transition: transform 0.08s ease;
+    }
+
+    .mosquito:active {
+      transform: scale(0.85);
+    }
+
+    .blast {
+      position: absolute;
+      width: 74px;
+      height: 74px;
+      margin-left: -37px;
+      margin-top: -37px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 15;
+      background: radial-gradient(circle, rgba(250, 204, 21, 0.9) 0%, rgba(239, 68, 68, 0.55) 45%, transparent 72%);
+      animation: blastAnim 0.28s ease-out forwards;
+    }
+
+    @keyframes blastAnim {
+      0% {
+        transform: scale(0.35);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1.45);
+        opacity: 0;
+      }
+    }
+
+    .floating-tag {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--accent);
+      pointer-events: none;
+      z-index: 16;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+      animation: floatUp 0.65s ease-out forwards;
+    }
+
+    .floating-tag.escape {
+      color: var(--danger);
+    }
+
+    @keyframes floatUp {
+      0% {
+        transform: translate(-50%, -20%);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(-50%, -95%);
+        opacity: 0;
+      }
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(7, 11, 20, 0.72);
+      backdrop-filter: blur(5px);
+      z-index: 30;
+    }
+
+    .overlay.hidden {
+      display: none;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 380px;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 22px;
+      padding: 26px 20px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1.15;
+      color: var(--text);
+    }
+
+    .card-title span {
+      display: block;
+    }
+
+    .card-desc {
+      margin: 14px 0 20px;
+      font-size: 15px;
+      line-height: 1.5;
+      color: #d6deee;
+      font-weight: 600;
+    }
+
+    .start-btn {
+      width: 100%;
+      max-width: 220px;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      color: #090d16;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(250, 204, 21, 0.28);
+      transition: transform 0.1s ease, background 0.15s ease;
+    }
+
+    .start-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .start-btn:active {
+      transform: scale(0.96);
+    }
+
+    .card-sub {
+      margin: 16px 0 0;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .gameover-score {
+      margin: 10px 0 18px;
+      font-size: 15px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .footer-hint {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      padding-bottom: 2px;
+      z-index: 20;
+    }
+
+    .screen-shake {
+      animation: shakeAnim 0.24s ease-in-out;
+    }
+
+    @keyframes shakeAnim {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="hud">
+      <div class="stat-box">
+        <div class="stat-label">SCORE</div>
+        <div class="stat-value" id="scoreEl">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">BEST</div>
+        <div class="stat-value" id="bestEl">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">ESCAPED</div>
+        <div class="stat-value" id="escapedEl">0 / 5</div>
+      </div>
+    </header>
+
+    <main class="arena" id="arena">
+      <div class="sleeper-zone" id="sleeperZone">
+        <div class="sleeper-emoji" id="sleeperEmoji">😴</div>
+        <div class="sleeper-text">સૂતો માણસ</div>
+      </div>
+
+      <div class="overlay" id="startOverlay">
+        <div class="card">
+          <h1 class="card-title">
+            <span>🦟 Mosquito</span>
+            <span>Smash</span>
+          </h1>
+          <p class="card-desc">
+            સૂતા માણસને મચ્છરોથી બચાવો!<br />
+            મચ્છર પર ટૅપ કરીને shotgun ચલાવો.
+          </p>
+          <button class="start-btn" id="startBtn" type="button">START GAME</button>
+          <p class="card-sub">
+            મચ્છર એક પછી એક અલગ દિશાથી આવશે અને ધીમે ધીમે ઝડપી થશે.
+          </p>
+        </div>
+      </div>
+
+      <div class="overlay hidden" id="gameOverOverlay">
+        <div class="card">
+          <h2 class="card-title">Game Over</h2>
+          <p class="gameover-score" id="gameOverStats">
+            Score: 0 • Best: 0
+          </p>
+          <button class="start-btn" id="restartBtn" type="button">PLAY AGAIN</button>
+          <p class="card-sub">
+            5 મચ્છર છટકી ગયા! ફરીથી પ્રયત્ન કરો.
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer-hint">
+      મચ્છર પર ટૅપ કરો • 5 મચ્છર છટકે = Game Over
+    </footer>
+  </div>
+
+  <script>
+    const MAX_ESCAPES = 5;
+    const BEST_KEY = "mosquito_smash_best_v1";
+
+    const audioAssets = {
+      entrance: [
+        new Audio("audio/entrance1.mp4"),
+        new Audio("audio/entrance2.mp4")
+      ],
+      hit: new Audio("audio/hit.mp4"),
+      reaction: new Audio("audio/sleeping_reaction.mp4")
+    };
+
+    Object.values(audioAssets).flat().forEach((aud) => {
+      aud.preload = "auto";
+    });
+
+    let entranceIndex = 0;
+
+    function playSound(audioObj) {
+      if (!audioObj) return;
+      try {
+        const clone = audioObj.cloneNode(true);
+        clone.volume = 1;
+        clone.play().catch(() => {});
+      } catch (_) {}
+    }
+
+    function playNextEntranceSound() {
+      const sound = audioAssets.entrance[entranceIndex % audioAssets.entrance.length];
+      entranceIndex += 1;
+      playSound(sound);
+    }
+
+    const appEl = document.getElementById("app");
+    const arenaEl = document.getElementById("arena");
+    const scoreEl = document.getElementById("scoreEl");
+    const bestEl = document.getElementById("bestEl");
+    const escapedEl = document.getElementById("escapedEl");
+    const sleeperEmojiEl = document.getElementById("sleeperEmoji");
+    const startOverlay = document.getElementById("startOverlay");
+    const gameOverOverlay = document.getElementById("gameOverOverlay");
+    const gameOverStats = document.getElementById("gameOverStats");
+    const startBtn = document.getElementById("startBtn");
+    const restartBtn = document.getElementById("restartBtn");
+
+    let score = 0;
+    let bestScore = Number(localStorage.getItem(BEST_KEY) || 0);
+    let escaped = 0;
+    let isPlaying = false;
+    let activeMosquito = null;
+    let spawnTimer = null;
+    let animFrameId = null;
+    let lastTimestamp = 0;
+
+    bestEl.textContent = bestScore;
+
+    function updateHud() {
+      scoreEl.textContent = score;
+      bestEl.textContent = bestScore;
+      escapedEl.textContent = `${escaped} / ${MAX_ESCAPES}`;
+      escapedEl.classList.toggle("danger", escaped >= 3);
+    }
+
+    function showFloatingTag(x, y, text, isEscape = false) {
+      const tag = document.createElement("div");
+      tag.className = `floating-tag ${isEscape ? "escape" : ""}`;
+      tag.style.left = `${x}px`;
+      tag.style.top = `${y}px`;
+      tag.textContent = text;
+      arenaEl.appendChild(tag);
+      setTimeout(() => tag.remove(), 650);
+    }
+
+    function triggerBlast(x, y) {
+      const blast = document.createElement("div");
+      blast.className = "blast";
+      blast.style.left = `${x}px`;
+      blast.style.top = `${y}px`;
+      arenaEl.appendChild(blast);
+      setTimeout(() => blast.remove(), 280);
+    }
+
+    function triggerReaction() {
+      playSound(audioAssets.reaction);
+      sleeperEmojiEl.textContent = "😠";
+      appEl.classList.remove("screen-shake");
+      void appEl.offsetWidth;
+      appEl.classList.add("screen-shake");
+      setTimeout(() => {
+        if (isPlaying) sleeperEmojiEl.textContent = "😴";
+      }, 750);
+    }
+
+    function clearCurrentMosquito() {
+      if (activeMosquito && activeMosquito.el && activeMosquito.el.parentNode) {
+        activeMosquito.el.parentNode.removeChild(activeMosquito.el);
+      }
+      activeMosquito = null;
+    }
+
+    function spawnMosquito() {
+      if (!isPlaying || activeMosquito) return;
+
+      const rect = arenaEl.getBoundingClientRect();
+      const pad = 38;
+      const side = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
+
+      let startX, startY;
+      if (side === 0) {
+        startX = pad + Math.random() * Math.max(20, rect.width - pad * 2);
+        startY = -25;
+      } else if (side === 1) {
+        startX = rect.width + 25;
+        startY = pad + Math.random() * Math.max(20, rect.height - pad * 2);
+      } else if (side === 2) {
+        startX = pad + Math.random() * Math.max(20, rect.width - pad * 2);
+        startY = rect.height + 25;
+      } else {
+        startX = -25;
+        startY = pad + Math.random() * Math.max(20, rect.height - pad * 2);
+      }
+
+      const targetX = pad + Math.random() * Math.max(20, rect.width - pad * 2);
+      const targetY = pad + Math.random() * Math.max(20, rect.height * 0.72);
+
+      const dx = targetX - startX;
+      const dy = targetY - startY;
+      const dist = Math.hypot(dx, dy) || 1;
+
+      // Speed increases gradually as score grows
+      const speedPxPerSec = Math.min(340, 125 + score * 6.5);
+
+      const el = document.createElement("div");
+      el.className = "mosquito";
+      el.textContent = "🦟";
+      el.style.left = `${startX}px`;
+      el.style.top = `${startY}px`;
+
+      const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
+      el.style.transform = `rotate(${angleDeg}deg)`;
+
+      const mosquitoObj = {
+        el,
+        x: startX,
+        y: startY,
+        vx: (dx / dist) * speedPxPerSec,
+        vy: (dy / dist) * speedPxPerSec,
+        age: 0,
+        maxAge: Math.max(1.45, 2.7 - score * 0.03)
+      };
+
+      const onHit = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isPlaying || activeMosquito !== mosquitoObj) return;
+
+        const hitX = mosquitoObj.x;
+        const hitY = mosquitoObj.y;
+
+        score += 1;
+        if (score > bestScore) {
+          bestScore = score;
+          localStorage.setItem(BEST_KEY, String(bestScore));
+        }
+        updateHud();
+
+        playSound(audioAssets.hit);
+        if (score % 5 === 0) {
+          triggerReaction();
+        }
+
+        triggerBlast(hitX, hitY);
+        showFloatingTag(hitX, hitY - 12, "💥 +1", false);
+
+        clearCurrentMosquito();
+        scheduleNextMosquito(320);
+      };
+
+      el.addEventListener("pointerdown", onHit, { passive: false });
+      arenaEl.appendChild(el);
+      activeMosquito = mosquitoObj;
+
+      playNextEntranceSound();
+    }
+
+    function scheduleNextMosquito(delayMs = 450) {
+      clearTimeout(spawnTimer);
+      if (!isPlaying) return;
+      spawnTimer = setTimeout(() => {
+        spawnMosquito();
+      }, delayMs);
+    }
+
+    function handleMosquitoEscaped() {
+      if (!activeMosquito) return;
+      const escX = Math.min(Math.max(activeMosquito.x, 36), arenaEl.clientWidth - 36);
+      const escY = Math.min(Math.max(activeMosquito.y, 36), arenaEl.clientHeight - 36);
+
+      clearCurrentMosquito();
+      escaped += 1;
+      updateHud();
+
+      triggerReaction();
+      showFloatingTag(escX, escY, "છટકી ગયું!", true);
+
+      if (escaped >= MAX_ESCAPES) {
+        endGame();
+      } else {
+        scheduleNextMosquito(420);
+      }
+    }
+
+    function gameLoop(timestamp) {
+      if (!isPlaying) return;
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      const dt = Math.min(0.05, (timestamp - lastTimestamp) / 1000);
+      lastTimestamp = timestamp;
+
+      if (activeMosquito) {
+        activeMosquito.age += dt;
+        activeMosquito.x += activeMosquito.vx * dt;
+        activeMosquito.y += activeMosquito.vy * dt;
+        activeMosquito.el.style.left = `${activeMosquito.x}px`;
+        activeMosquito.el.style.top = `${activeMosquito.y}px`;
+
+        const rect = arenaEl.getBoundingClientRect();
+        const outOfBounds =
+          activeMosquito.x < -45 ||
+          activeMosquito.x > rect.width + 45 ||
+          activeMosquito.y < -45 ||
+          activeMosquito.y > rect.height + 45 ||
+          activeMosquito.age >= activeMosquito.maxAge;
+
+        if (outOfBounds) {
+          handleMosquitoEscaped();
+        }
+      }
+
+      animFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    function startGame() {
+      score = 0;
+      escaped = 0;
+      entranceIndex = 0;
+      isPlaying = true;
+      lastTimestamp = 0;
+      sleeperEmojiEl.textContent = "😴";
+      updateHud();
+
+      clearCurrentMosquito();
+      clearTimeout(spawnTimer);
+      cancelAnimationFrame(animFrameId);
+
+      startOverlay.classList.add("hidden");
+      gameOverOverlay.classList.add("hidden");
+
+      animFrameId = requestAnimationFrame(gameLoop);
+      scheduleNextMosquito(250);
+    }
+
+    function endGame() {
+      isPlaying = false;
+      clearTimeout(spawnTimer);
+      cancelAnimationFrame(animFrameId);
+      clearCurrentMosquito();
+
+      gameOverStats.textContent = `Score: ${score} • Best: ${bestScore}`;
+      gameOverOverlay.classList.remove("hidden");
+    }
+
+    startBtn.addEventListener("click", startGame);
+    restartBtn.addEventListener("click", startGame);
+  </script>
+</body>
+</html>
