@@ -119,8 +119,8 @@
       left: 50%;
       bottom: 24px;
       transform: translateX(-50%);
-      width: 224px;
-      height: 112px;
+      width: 228px;
+      height: 116px;
       z-index: 8;
       pointer-events: none;
       transition: transform 0.14s ease;
@@ -134,7 +134,7 @@
       position: absolute;
       left: 12px;
       right: 12px;
-      bottom: 12px;
+      bottom: 14px;
       height: 48px;
       background: #e5e7eb;
       border: 3px solid #1f2937;
@@ -145,7 +145,7 @@
     .bed-headboard {
       position: absolute;
       left: 4px;
-      bottom: 14px;
+      bottom: 16px;
       width: 20px;
       height: 68px;
       background: #d1d5db;
@@ -156,7 +156,7 @@
     .bed-footboard {
       position: absolute;
       right: 4px;
-      bottom: 8px;
+      bottom: 10px;
       width: 18px;
       height: 54px;
       background: #d1d5db;
@@ -167,7 +167,7 @@
     .pillow {
       position: absolute;
       left: 28px;
-      bottom: 48px;
+      bottom: 50px;
       width: 44px;
       height: 22px;
       background: #ffffff;
@@ -180,7 +180,7 @@
       position: absolute;
       left: 72px;
       right: 24px;
-      bottom: 22px;
+      bottom: 24px;
       height: 36px;
       background: #dbeafe;
       border: 2.5px solid #1f2937;
@@ -195,22 +195,38 @@
     .dadi-head-wrap {
       position: absolute;
       left: 34px;
-      bottom: 52px;
-      width: 46px;
-      height: 46px;
+      bottom: 54px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       border: 2.5px solid #1f2937;
-      background: #fde68a;
+      background: #fef3c7;
       overflow: hidden;
       z-index: 10;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.22);
     }
 
     .dadi-head-wrap img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      display: none;
+    }
+
+    .dadi-head-wrap img.has-photo {
       display: block;
+    }
+
+    .dadi-emoji-fallback {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .dadi-head-wrap img.has-photo + .dadi-emoji-fallback {
+      display: none;
     }
 
     .dadi-badge {
@@ -370,7 +386,14 @@
         <div class="pillow"></div>
         <div class="blanket"></div>
         <div class="dadi-head-wrap">
-          <img src="sleeper.jpg" alt="દાદી" id="dadiImg" />
+          <img
+            src="sleeper.jpg"
+            alt="દાદી"
+            id="dadiImg"
+            onload="this.classList.add('has-photo')"
+            onerror="this.classList.remove('has-photo')"
+          />
+          <span class="dadi-emoji-fallback" id="dadiEmoji">👵</span>
         </div>
         <div class="dadi-badge" id="dadiBadge">દાદી સૂઈ રહ્યા છે 💤</div>
       </div>
@@ -484,6 +507,7 @@
     const escapedValEl = document.getElementById("escapedVal");
     const bedSceneEl = document.getElementById("bedScene");
     const dadiBadgeEl = document.getElementById("dadiBadge");
+    const dadiEmojiEl = document.getElementById("dadiEmoji");
 
     const startOverlay = document.getElementById("startOverlay");
     const pauseOverlay = document.getElementById("pauseOverlay");
@@ -587,6 +611,7 @@
       bedSceneEl.classList.remove("alert");
       dadiBadgeEl.classList.remove("alert");
       dadiBadgeEl.textContent = "દાદી સૂઈ રહ્યા છે 💤";
+      dadiEmojiEl.textContent = "👵";
     }
 
     function setDadiAlert() {
@@ -594,6 +619,7 @@
       bedSceneEl.classList.add("alert");
       dadiBadgeEl.classList.add("alert");
       dadiBadgeEl.textContent = "દાદીને કરડ્યું! 😠";
+      dadiEmojiEl.textContent = "😖";
 
       gameWrap.classList.remove("shake-screen");
       void gameWrap.offsetWidth;
@@ -638,7 +664,7 @@
       if (!running || paused || mosquito) return;
       const rect = stage.getBoundingClientRect();
       const pad = 36;
-      const edge = Math.floor(Math.random() * 3); // 0: top, 1: right, 2: left
+      const edge = Math.floor(Math.random() * 3);
 
       let sx, sy;
       if (edge === 0) {
@@ -652,7 +678,6 @@
         sy = pad + Math.random() * Math.max(24, rect.height * 0.58);
       }
 
-      // પલંગ પર સૂતેલા દાદી તરફ ઉડતો માર્ગ
       const tx = rect.width * 0.5 - 32 + (Math.random() * 44 - 22);
       const ty = rect.height - 82;
 
@@ -805,7 +830,6 @@
       overOverlay.classList.remove("hidden");
     }
 
-    // Dash Aim Line + Hit Support
     stage.addEventListener("pointerdown", (e) => {
       if (!running || paused) return;
       prepareAudioBoost();
