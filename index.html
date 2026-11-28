@@ -3,19 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#070b14" />
-  <title>Mosquito Smash</title>
+  <meta name="theme-color" content="#f4f5f7" />
+  <title>Mosquito Smash - દાદી સ્પેશિયલ</title>
   <style>
     :root {
-      --bg: #070b14;
-      --panel: #10182a;
-      --panel-border: rgba(255, 255, 255, 0.08);
-      --text: #f3f6fc;
-      --muted: #9aa7be;
-      --accent: #facc15;
-      --accent-hover: #eab308;
-      --danger: #ef4444;
-      --hit: #22c55e;
+      --bg: #f3f4f6;
+      --ink: #111827;
+      --muted: #4b5563;
+      --accent: #eab308;
+      --danger: #dc2626;
+      --card: #ffffff;
     }
 
     * {
@@ -30,13 +27,13 @@
       width: 100%;
       height: 100%;
       background: var(--bg);
-      color: var(--text);
+      color: var(--ink);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Gujarati", sans-serif;
       overflow: hidden;
-      touch-action: manipulation;
+      touch-action: none;
     }
 
-    .app {
+    .game-wrap {
       position: relative;
       width: 100%;
       height: 100dvh;
@@ -44,160 +41,251 @@
       margin: 0 auto;
       display: flex;
       flex-direction: column;
+      background: #f8fafc;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
       justify-content: space-between;
-      padding: 14px 16px 12px;
+      padding: 12px 16px 6px;
+      z-index: 25;
     }
 
-    .hud {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      z-index: 20;
-    }
-
-    .stat-box {
-      background: rgba(16, 24, 42, 0.9);
-      border: 1px solid var(--panel-border);
-      border-radius: 14px;
-      padding: 10px 8px;
+    .score-board {
       text-align: center;
-      backdrop-filter: blur(8px);
+      flex: 1;
     }
 
-    .stat-label {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-      text-transform: uppercase;
+    .score-now {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1;
+      color: var(--ink);
     }
 
-    .stat-value {
-      margin-top: 2px;
-      font-size: 24px;
+    .score-meta {
+      margin-top: 4px;
+      font-size: 12px;
       font-weight: 800;
-      line-height: 1.15;
-      color: var(--text);
+      letter-spacing: 0.04em;
+      color: var(--muted);
     }
 
-    .stat-value.danger {
+    .score-meta .danger {
       color: var(--danger);
     }
 
-    .arena {
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(17, 24, 39, 0.16);
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 16px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.93);
+    }
+
+    .stage {
       position: relative;
       flex: 1;
-      margin: 12px 0;
-      border-radius: 22px;
+      width: 100%;
       overflow: hidden;
-      background:
-        radial-gradient(circle at 50% 62%, rgba(250, 204, 21, 0.08), transparent 48%),
-        linear-gradient(180deg, #0b1120 0%, #070b14 100%);
-      border: 1px solid var(--panel-border);
     }
 
-    .sleeper-zone {
+    canvas#aimCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 14;
+    }
+
+    /* નીચે પલંગ પર સૂતેલા દાદી */
+    .bed-scene {
       position: absolute;
       left: 50%;
-      bottom: 18px;
+      bottom: 24px;
       transform: translateX(-50%);
-      text-align: center;
+      width: 224px;
+      height: 112px;
+      z-index: 8;
       pointer-events: none;
-      z-index: 5;
-      opacity: 0.72;
+      transition: transform 0.14s ease;
     }
 
-    .sleeper-emoji {
-      font-size: 34px;
-      line-height: 1;
+    .bed-scene.alert {
+      transform: translateX(-50%) scale(1.04);
     }
 
-    .sleeper-text {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
-    .mosquito {
+    .bed-base {
       position: absolute;
-      width: 66px;
-      height: 66px;
-      margin-left: -33px;
-      margin-top: -33px;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      height: 48px;
+      background: #e5e7eb;
+      border: 3px solid #1f2937;
+      border-radius: 10px;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.14);
+    }
+
+    .bed-headboard {
+      position: absolute;
+      left: 4px;
+      bottom: 14px;
+      width: 20px;
+      height: 68px;
+      background: #d1d5db;
+      border: 3px solid #1f2937;
+      border-radius: 8px 4px 4px 8px;
+    }
+
+    .bed-footboard {
+      position: absolute;
+      right: 4px;
+      bottom: 8px;
+      width: 18px;
+      height: 54px;
+      background: #d1d5db;
+      border: 3px solid #1f2937;
+      border-radius: 4px 8px 8px 4px;
+    }
+
+    .pillow {
+      position: absolute;
+      left: 28px;
+      bottom: 48px;
+      width: 44px;
+      height: 22px;
+      background: #ffffff;
+      border: 2.5px solid #1f2937;
+      border-radius: 8px;
+      transform: rotate(-12deg);
+    }
+
+    .blanket {
+      position: absolute;
+      left: 72px;
+      right: 24px;
+      bottom: 22px;
+      height: 36px;
+      background: #dbeafe;
+      border: 2.5px solid #1f2937;
+      border-radius: 6px 14px 8px 6px;
+      transition: background 0.15s ease;
+    }
+
+    .bed-scene.alert .blanket {
+      background: #fee2e2;
+    }
+
+    .dadi-head-wrap {
+      position: absolute;
+      left: 34px;
+      bottom: 52px;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: 2.5px solid #1f2937;
+      background: #fde68a;
+      overflow: hidden;
+      z-index: 10;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .dadi-head-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .dadi-badge {
+      position: absolute;
+      left: 50%;
+      bottom: -8px;
+      transform: translateX(-50%);
+      background: #111827;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 9px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .dadi-badge.alert {
+      background: var(--danger);
+    }
+
+    .mosquito-entity {
+      position: absolute;
+      width: 68px;
+      height: 68px;
+      margin-left: -34px;
+      margin-top: -34px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 40px;
+      z-index: 12;
       cursor: pointer;
-      z-index: 10;
-      filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.55));
-      transition: transform 0.08s ease;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.22));
     }
 
-    .mosquito:active {
-      transform: scale(0.85);
-    }
-
-    .blast {
+    .splat-dot {
       position: absolute;
-      width: 74px;
-      height: 74px;
-      margin-left: -37px;
-      margin-top: -37px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       pointer-events: none;
-      z-index: 15;
-      background: radial-gradient(circle, rgba(250, 204, 21, 0.9) 0%, rgba(239, 68, 68, 0.55) 45%, transparent 72%);
-      animation: blastAnim 0.28s ease-out forwards;
+      z-index: 16;
+      transition: transform 0.35s ease-out, opacity 0.35s ease-out;
     }
 
-    @keyframes blastAnim {
-      0% {
-        transform: scale(0.35);
-        opacity: 1;
-      }
-      100% {
-        transform: scale(1.45);
-        opacity: 0;
-      }
-    }
-
-    .floating-tag {
+    .plus-one {
       position: absolute;
       transform: translate(-50%, -50%);
-      font-size: 14px;
-      font-weight: 800;
-      color: var(--accent);
+      font-size: 18px;
+      font-weight: 900;
+      color: #111827;
       pointer-events: none;
-      z-index: 16;
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
-      animation: floatUp 0.65s ease-out forwards;
+      z-index: 18;
+      animation: popUp 0.6s ease-out forwards;
     }
 
-    .floating-tag.escape {
+    .plus-one.bad {
       color: var(--danger);
+      font-size: 14px;
     }
 
-    @keyframes floatUp {
-      0% {
-        transform: translate(-50%, -20%);
-        opacity: 1;
-      }
-      100% {
-        transform: translate(-50%, -95%);
-        opacity: 0;
-      }
+    @keyframes popUp {
+      0% { transform: translate(-50%, -10%) scale(0.8); opacity: 1; }
+      100% { transform: translate(-50%, -85%) scale(1.15); opacity: 0; }
     }
 
     .overlay {
       position: absolute;
       inset: 0;
+      background: rgba(248, 250, 252, 0.88);
+      backdrop-filter: blur(4px);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 18px;
-      background: rgba(7, 11, 20, 0.72);
-      backdrop-filter: blur(5px);
+      padding: 20px;
       z-index: 30;
     }
 
@@ -205,158 +293,122 @@
       display: none;
     }
 
-    .card {
+    .modal-card {
       width: 100%;
-      max-width: 380px;
-      background: var(--panel);
-      border: 1px solid var(--panel-border);
-      border-radius: 22px;
-      padding: 26px 20px;
+      max-width: 340px;
+      background: var(--card);
+      border: 2px solid #111827;
+      border-radius: 20px;
+      padding: 24px 18px;
       text-align: center;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.14);
     }
 
-    .card-title {
+    .modal-title {
       margin: 0;
-      font-size: 32px;
+      font-size: 26px;
       font-weight: 900;
-      line-height: 1.15;
-      color: var(--text);
     }
 
-    .card-title span {
-      display: block;
-    }
-
-    .card-desc {
-      margin: 14px 0 20px;
-      font-size: 15px;
+    .modal-desc {
+      margin: 10px 0 18px;
+      font-size: 14px;
       line-height: 1.5;
-      color: #d6deee;
+      color: var(--muted);
       font-weight: 600;
     }
 
-    .start-btn {
+    .play-btn {
       width: 100%;
-      max-width: 220px;
-      border: none;
+      max-width: 200px;
+      padding: 13px 18px;
       border-radius: 12px;
-      padding: 14px 20px;
-      font-size: 16px;
-      font-weight: 900;
-      letter-spacing: 0.04em;
-      color: #090d16;
+      border: 2px solid #111827;
       background: var(--accent);
+      color: #111827;
+      font-size: 15px;
+      font-weight: 900;
       cursor: pointer;
-      box-shadow: 0 8px 24px rgba(250, 204, 21, 0.28);
-      transition: transform 0.1s ease, background 0.15s ease;
     }
 
-    .start-btn:hover {
-      background: var(--accent-hover);
-    }
-
-    .start-btn:active {
+    .play-btn:active {
       transform: scale(0.96);
     }
 
-    .card-sub {
-      margin: 16px 0 0;
-      font-size: 13px;
-      line-height: 1.45;
-      color: var(--muted);
+    .shake-screen {
+      animation: shakeIt 0.25s ease-in-out;
     }
 
-    .gameover-score {
-      margin: 10px 0 18px;
-      font-size: 15px;
-      color: var(--muted);
-      font-weight: 700;
-    }
-
-    .footer-hint {
-      text-align: center;
-      font-size: 12px;
-      color: var(--muted);
-      padding-bottom: 2px;
-      z-index: 20;
-    }
-
-    .screen-shake {
-      animation: shakeAnim 0.24s ease-in-out;
-    }
-
-    @keyframes shakeAnim {
+    @keyframes shakeIt {
       0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-6px); }
-      75% { transform: translateX(6px); }
+      25% { transform: translateX(-7px); }
+      75% { transform: translateX(7px); }
     }
   </style>
 </head>
 <body>
-  <div class="app" id="app">
-    <header class="hud">
-      <div class="stat-box">
-        <div class="stat-label">SCORE</div>
-        <div class="stat-value" id="scoreEl">0</div>
+  <div class="game-wrap" id="gameWrap">
+    <div class="top-bar">
+      <button class="icon-btn" id="pauseBtn" type="button" title="Pause">❚❚</button>
+      <div class="score-board">
+        <div class="score-now" id="scoreNow">0</div>
+        <div class="score-meta">
+          BEST <span id="bestVal">0</span> • ESCAPED <span id="escapedVal">0/5</span>
+        </div>
       </div>
-      <div class="stat-box">
-        <div class="stat-label">BEST</div>
-        <div class="stat-value" id="bestEl">0</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">ESCAPED</div>
-        <div class="stat-value" id="escapedEl">0 / 5</div>
-      </div>
-    </header>
+      <div style="width: 40px;"></div>
+    </div>
 
-    <main class="arena" id="arena">
-      <div class="sleeper-zone" id="sleeperZone">
-        <div class="sleeper-emoji" id="sleeperEmoji">😴</div>
-        <div class="sleeper-text">સૂતો માણસ</div>
+    <div class="stage" id="stage">
+      <canvas id="aimCanvas"></canvas>
+
+      <!-- પલંગ પર સૂતેલા દાદી -->
+      <div class="bed-scene" id="bedScene">
+        <div class="bed-headboard"></div>
+        <div class="bed-footboard"></div>
+        <div class="bed-base"></div>
+        <div class="pillow"></div>
+        <div class="blanket"></div>
+        <div class="dadi-head-wrap">
+          <img src="sleeper.jpg" alt="દાદી" id="dadiImg" />
+        </div>
+        <div class="dadi-badge" id="dadiBadge">દાદી સૂઈ રહ્યા છે 💤</div>
       </div>
 
       <div class="overlay" id="startOverlay">
-        <div class="card">
-          <h1 class="card-title">
-            <span>🦟 Mosquito</span>
-            <span>Smash</span>
-          </h1>
-          <p class="card-desc">
-            સૂતા માણસને મચ્છરોથી બચાવો!<br />
-            મચ્છર પર ટૅપ કરીને shotgun ચલાવો.
+        <div class="modal-card">
+          <h1 class="modal-title">🦟 Mosquito Smash</h1>
+          <p class="modal-desc">
+            પલંગ પર સૂતેલા દાદીને બચાવો!<br />
+            મચ્છર પર ટૅપ કરો અથવા લાઈન ખેંચીને મારો.
           </p>
-          <button class="start-btn" id="startBtn" type="button">START GAME</button>
-          <p class="card-sub">
-            મચ્છર એક પછી એક અલગ દિશાથી આવશે અને ધીમે ધીમે ઝડપી થશે.
-          </p>
+          <button class="play-btn" id="startBtn" type="button">START GAME</button>
         </div>
       </div>
 
-      <div class="overlay hidden" id="gameOverOverlay">
-        <div class="card">
-          <h2 class="card-title">Game Over</h2>
-          <p class="gameover-score" id="gameOverStats">
-            Score: 0 • Best: 0
-          </p>
-          <button class="start-btn" id="restartBtn" type="button">PLAY AGAIN</button>
-          <p class="card-sub">
-            5 મચ્છર છટકી ગયા! ફરીથી પ્રયત્ન કરો.
-          </p>
+      <div class="overlay hidden" id="pauseOverlay">
+        <div class="modal-card">
+          <h2 class="modal-title">Paused</h2>
+          <p class="modal-desc">રમત થોભાવી છે.</p>
+          <button class="play-btn" id="resumeBtn" type="button">RESUME</button>
         </div>
       </div>
-    </main>
 
-    <footer class="footer-hint">
-      મચ્છર પર ટૅપ કરો • 5 મચ્છર છટકે = Game Over
-    </footer>
+      <div class="overlay hidden" id="overOverlay">
+        <div class="modal-card">
+          <h2 class="modal-title">Game Over</h2>
+          <p class="modal-desc" id="overStats">Score: 0 • Best: 0</p>
+          <button class="play-btn" id="retryBtn" type="button">PLAY AGAIN</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
-    const MAX_ESCAPES = 5;
-    const BEST_KEY = "mosquito_smash_best_v1";
+    const MAX_ESCAPED = 5;
+    const BEST_KEY = "mosquito_smash_dadi_best_v1";
 
-    const audioAssets = {
+    const audioFiles = {
       entrance: [
         new Audio("audio/entrance1.mp4"),
         new Audio("audio/entrance2.mp4")
@@ -365,267 +417,439 @@
       reaction: new Audio("audio/sleeping_reaction.mp4")
     };
 
-    Object.values(audioAssets).flat().forEach((aud) => {
-      aud.preload = "auto";
+    Object.values(audioFiles).flat().forEach((a) => {
+      a.preload = "auto";
     });
 
-    let entranceIndex = 0;
+    let audioCtx = null;
+    let hitAudioBuf = null;
+    let entranceTurn = 0;
 
-    function playSound(audioObj) {
-      if (!audioObj) return;
+    function prepareAudioBoost() {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      if (!audioCtx) audioCtx = new Ctx();
+      if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+      if (!hitAudioBuf) {
+        fetch("audio/hit.mp4")
+          .then((r) => r.arrayBuffer())
+          .then((b) => audioCtx.decodeAudioData(b))
+          .then((dec) => { hitAudioBuf = dec; })
+          .catch(() => {});
+      }
+    }
+
+    function playHitLoud() {
+      prepareAudioBoost();
+      if (audioCtx && hitAudioBuf) {
+        try {
+          const src = audioCtx.createBufferSource();
+          src.buffer = hitAudioBuf;
+          const gain = audioCtx.createGain();
+          gain.gain.value = 3.6;
+          src.connect(gain);
+          gain.connect(audioCtx.destination);
+          src.start(0);
+        } catch (_) {}
+      }
       try {
-        const clone = audioObj.cloneNode(true);
-        clone.volume = 1;
+        const clone = audioFiles.hit.cloneNode(true);
+        clone.volume = 1.0;
         clone.play().catch(() => {});
       } catch (_) {}
     }
 
-    function playNextEntranceSound() {
-      const sound = audioAssets.entrance[entranceIndex % audioAssets.entrance.length];
-      entranceIndex += 1;
-      playSound(sound);
+    function playClip(clip, vol = 1.0) {
+      if (!clip) return;
+      try {
+        const clone = clip.cloneNode(true);
+        clone.volume = vol;
+        clone.play().catch(() => {});
+      } catch (_) {}
     }
 
-    const appEl = document.getElementById("app");
-    const arenaEl = document.getElementById("arena");
-    const scoreEl = document.getElementById("scoreEl");
-    const bestEl = document.getElementById("bestEl");
-    const escapedEl = document.getElementById("escapedEl");
-    const sleeperEmojiEl = document.getElementById("sleeperEmoji");
+    function playEntranceClip() {
+      const clip = audioFiles.entrance[entranceTurn % audioFiles.entrance.length];
+      entranceTurn += 1;
+      playClip(clip, 1.0);
+    }
+
+    const gameWrap = document.getElementById("gameWrap");
+    const stage = document.getElementById("stage");
+    const aimCanvas = document.getElementById("aimCanvas");
+    const ctx = aimCanvas.getContext("2d");
+
+    const scoreNowEl = document.getElementById("scoreNow");
+    const bestValEl = document.getElementById("bestVal");
+    const escapedValEl = document.getElementById("escapedVal");
+    const bedSceneEl = document.getElementById("bedScene");
+    const dadiBadgeEl = document.getElementById("dadiBadge");
+
     const startOverlay = document.getElementById("startOverlay");
-    const gameOverOverlay = document.getElementById("gameOverOverlay");
-    const gameOverStats = document.getElementById("gameOverStats");
+    const pauseOverlay = document.getElementById("pauseOverlay");
+    const overOverlay = document.getElementById("overOverlay");
+    const overStatsEl = document.getElementById("overStats");
+
     const startBtn = document.getElementById("startBtn");
-    const restartBtn = document.getElementById("restartBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const resumeBtn = document.getElementById("resumeBtn");
+    const retryBtn = document.getElementById("retryBtn");
 
     let score = 0;
-    let bestScore = Number(localStorage.getItem(BEST_KEY) || 0);
+    let best = Number(localStorage.getItem(BEST_KEY) || 0);
     let escaped = 0;
-    let isPlaying = false;
-    let activeMosquito = null;
-    let spawnTimer = null;
-    let animFrameId = null;
-    let lastTimestamp = 0;
+    let running = false;
+    let paused = false;
 
-    bestEl.textContent = bestScore;
+    let mosquito = null;
+    let spawnTimeout = null;
+    let rafId = null;
+    let prevTime = 0;
 
-    function updateHud() {
-      scoreEl.textContent = score;
-      bestEl.textContent = bestScore;
-      escapedEl.textContent = `${escaped} / ${MAX_ESCAPES}`;
-      escapedEl.classList.toggle("danger", escaped >= 3);
+    let aiming = false;
+    let aimOrigin = { x: 0, y: 0 };
+    let aimCurrent = { x: 0, y: 0 };
+
+    bestValEl.textContent = best;
+
+    function resizeCanvas() {
+      const rect = stage.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      aimCanvas.width = rect.width * dpr;
+      aimCanvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
-    function showFloatingTag(x, y, text, isEscape = false) {
-      const tag = document.createElement("div");
-      tag.className = `floating-tag ${isEscape ? "escape" : ""}`;
-      tag.style.left = `${x}px`;
-      tag.style.top = `${y}px`;
-      tag.textContent = text;
-      arenaEl.appendChild(tag);
-      setTimeout(() => tag.remove(), 650);
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    function refreshHud() {
+      scoreNowEl.textContent = score;
+      bestValEl.textContent = best;
+      escapedValEl.textContent = `${escaped}/${MAX_ESCAPED}`;
+      escapedValEl.classList.toggle("danger", escaped >= 3);
     }
 
-    function triggerBlast(x, y) {
-      const blast = document.createElement("div");
-      blast.className = "blast";
-      blast.style.left = `${x}px`;
-      blast.style.top = `${y}px`;
-      arenaEl.appendChild(blast);
-      setTimeout(() => blast.remove(), 280);
+    function drawAimLine() {
+      const rect = stage.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      if (!aiming || !running || paused) return;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.setLineDash([7, 7]);
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = "rgba(17, 24, 39, 0.65)";
+      ctx.moveTo(aimOrigin.x, aimOrigin.y);
+      ctx.lineTo(aimCurrent.x, aimCurrent.y);
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.arc(aimCurrent.x, aimCurrent.y, 12, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(220, 38, 38, 0.75)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
     }
 
-    function triggerReaction() {
-      playSound(audioAssets.reaction);
-      sleeperEmojiEl.textContent = "😠";
-      appEl.classList.remove("screen-shake");
-      void appEl.offsetWidth;
-      appEl.classList.add("screen-shake");
-      setTimeout(() => {
-        if (isPlaying) sleeperEmojiEl.textContent = "😴";
-      }, 750);
-    }
+    function spawnSplatter(x, y) {
+      const colors = ["#111827", "#dc2626", "#eab308", "#374151"];
+      for (let i = 0; i < 10; i++) {
+        const dot = document.createElement("div");
+        dot.className = "splat-dot";
+        dot.style.left = `${x}px`;
+        dot.style.top = `${y}px`;
+        dot.style.background = colors[i % colors.length];
+        stage.appendChild(dot);
 
-    function clearCurrentMosquito() {
-      if (activeMosquito && activeMosquito.el && activeMosquito.el.parentNode) {
-        activeMosquito.el.parentNode.removeChild(activeMosquito.el);
+        const angle = (Math.PI * 2 * i) / 10 + Math.random() * 0.4;
+        const dist = 20 + Math.random() * 28;
+        requestAnimationFrame(() => {
+          dot.style.transform = `translate(${Math.cos(angle) * dist}px, ${Math.sin(angle) * dist}px) scale(0.4)`;
+          dot.style.opacity = "0";
+        });
+        setTimeout(() => dot.remove(), 360);
       }
-      activeMosquito = null;
+    }
+
+    function spawnPopText(x, y, txt, isBad = false) {
+      const el = document.createElement("div");
+      el.className = `plus-one ${isBad ? "bad" : ""}`;
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      el.textContent = txt;
+      stage.appendChild(el);
+      setTimeout(() => el.remove(), 600);
+    }
+
+    function setDadiCalm() {
+      bedSceneEl.classList.remove("alert");
+      dadiBadgeEl.classList.remove("alert");
+      dadiBadgeEl.textContent = "દાદી સૂઈ રહ્યા છે 💤";
+    }
+
+    function setDadiAlert() {
+      playClip(audioFiles.reaction, 1.0);
+      bedSceneEl.classList.add("alert");
+      dadiBadgeEl.classList.add("alert");
+      dadiBadgeEl.textContent = "દાદીને કરડ્યું! 😠";
+
+      gameWrap.classList.remove("shake-screen");
+      void gameWrap.offsetWidth;
+      gameWrap.classList.add("shake-screen");
+
+      setTimeout(() => {
+        if (running && !paused) setDadiCalm();
+      }, 850);
+    }
+
+    function removeMosquito() {
+      if (mosquito && mosquito.el && mosquito.el.parentNode) {
+        mosquito.el.parentNode.removeChild(mosquito.el);
+      }
+      mosquito = null;
+    }
+
+    function smashMosquito() {
+      if (!running || paused || !mosquito) return;
+      const mx = mosquito.x;
+      const my = mosquito.y;
+
+      score += 1;
+      if (score > best) {
+        best = score;
+        localStorage.setItem(BEST_KEY, String(best));
+      }
+      refreshHud();
+
+      playHitLoud();
+      if (score % 6 === 0) {
+        playClip(audioFiles.reaction, 1.0);
+      }
+
+      spawnSplatter(mx, my);
+      spawnPopText(mx, my - 10, "+1", false);
+      removeMosquito();
+      queueNextMosquito(300);
     }
 
     function spawnMosquito() {
-      if (!isPlaying || activeMosquito) return;
+      if (!running || paused || mosquito) return;
+      const rect = stage.getBoundingClientRect();
+      const pad = 36;
+      const edge = Math.floor(Math.random() * 3); // 0: top, 1: right, 2: left
 
-      const rect = arenaEl.getBoundingClientRect();
-      const pad = 38;
-      const side = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
-
-      let startX, startY;
-      if (side === 0) {
-        startX = pad + Math.random() * Math.max(20, rect.width - pad * 2);
-        startY = -25;
-      } else if (side === 1) {
-        startX = rect.width + 25;
-        startY = pad + Math.random() * Math.max(20, rect.height - pad * 2);
-      } else if (side === 2) {
-        startX = pad + Math.random() * Math.max(20, rect.width - pad * 2);
-        startY = rect.height + 25;
+      let sx, sy;
+      if (edge === 0) {
+        sx = pad + Math.random() * Math.max(24, rect.width - pad * 2);
+        sy = -26;
+      } else if (edge === 1) {
+        sx = rect.width + 26;
+        sy = pad + Math.random() * Math.max(24, rect.height * 0.58);
       } else {
-        startX = -25;
-        startY = pad + Math.random() * Math.max(20, rect.height - pad * 2);
+        sx = -26;
+        sy = pad + Math.random() * Math.max(24, rect.height * 0.58);
       }
 
-      const targetX = pad + Math.random() * Math.max(20, rect.width - pad * 2);
-      const targetY = pad + Math.random() * Math.max(20, rect.height * 0.72);
+      // પલંગ પર સૂતેલા દાદી તરફ ઉડતો માર્ગ
+      const tx = rect.width * 0.5 - 32 + (Math.random() * 44 - 22);
+      const ty = rect.height - 82;
 
-      const dx = targetX - startX;
-      const dy = targetY - startY;
-      const dist = Math.hypot(dx, dy) || 1;
-
-      // Speed increases gradually as score grows
-      const speedPxPerSec = Math.min(340, 125 + score * 6.5);
+      const dx = tx - sx;
+      const dy = ty - sy;
+      const len = Math.hypot(dx, dy) || 1;
+      const speed = Math.min(320, 115 + score * 6);
 
       const el = document.createElement("div");
-      el.className = "mosquito";
+      el.className = "mosquito-entity";
       el.textContent = "🦟";
-      el.style.left = `${startX}px`;
-      el.style.top = `${startY}px`;
+      el.style.left = `${sx}px`;
+      el.style.top = `${sy}px`;
 
-      const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
-      el.style.transform = `rotate(${angleDeg}deg)`;
+      const deg = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
+      el.style.transform = `rotate(${deg}deg)`;
 
-      const mosquitoObj = {
+      const item = {
         el,
-        x: startX,
-        y: startY,
-        vx: (dx / dist) * speedPxPerSec,
-        vy: (dy / dist) * speedPxPerSec,
+        x: sx,
+        y: sy,
+        tx,
+        ty,
+        vx: (dx / len) * speed,
+        vy: (dy / len) * speed,
+        wigglePhase: Math.random() * Math.PI * 2,
         age: 0,
-        maxAge: Math.max(1.45, 2.7 - score * 0.03)
+        maxAge: Math.max(2.3, 4.0 - score * 0.035)
       };
 
-      const onHit = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (!isPlaying || activeMosquito !== mosquitoObj) return;
-
-        const hitX = mosquitoObj.x;
-        const hitY = mosquitoObj.y;
-
-        score += 1;
-        if (score > bestScore) {
-          bestScore = score;
-          localStorage.setItem(BEST_KEY, String(bestScore));
+      el.addEventListener("pointerdown", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        if (mosquito === item) {
+          smashMosquito();
         }
-        updateHud();
+      }, { passive: false });
 
-        playSound(audioAssets.hit);
-        if (score % 5 === 0) {
-          triggerReaction();
-        }
-
-        triggerBlast(hitX, hitY);
-        showFloatingTag(hitX, hitY - 12, "💥 +1", false);
-
-        clearCurrentMosquito();
-        scheduleNextMosquito(320);
-      };
-
-      el.addEventListener("pointerdown", onHit, { passive: false });
-      arenaEl.appendChild(el);
-      activeMosquito = mosquitoObj;
-
-      playNextEntranceSound();
+      stage.appendChild(el);
+      mosquito = item;
+      playEntranceClip();
     }
 
-    function scheduleNextMosquito(delayMs = 450) {
-      clearTimeout(spawnTimer);
-      if (!isPlaying) return;
-      spawnTimer = setTimeout(() => {
-        spawnMosquito();
-      }, delayMs);
+    function queueNextMosquito(delay = 420) {
+      clearTimeout(spawnTimeout);
+      if (!running || paused) return;
+      spawnTimeout = setTimeout(spawnMosquito, delay);
     }
 
-    function handleMosquitoEscaped() {
-      if (!activeMosquito) return;
-      const escX = Math.min(Math.max(activeMosquito.x, 36), arenaEl.clientWidth - 36);
-      const escY = Math.min(Math.max(activeMosquito.y, 36), arenaEl.clientHeight - 36);
+    function mosquitoEscapedToDadi() {
+      if (!mosquito) return;
+      const ex = Math.min(Math.max(mosquito.x, 40), stage.clientWidth - 40);
+      const ey = Math.max(mosquito.y - 16, 40);
 
-      clearCurrentMosquito();
+      removeMosquito();
       escaped += 1;
-      updateHud();
+      refreshHud();
 
-      triggerReaction();
-      showFloatingTag(escX, escY, "છટકી ગયું!", true);
+      setDadiAlert();
+      spawnPopText(ex, ey, "કરડ્યું!", true);
 
-      if (escaped >= MAX_ESCAPES) {
-        endGame();
+      if (escaped >= MAX_ESCAPED) {
+        finishGame();
       } else {
-        scheduleNextMosquito(420);
+        queueNextMosquito(420);
       }
     }
 
-    function gameLoop(timestamp) {
-      if (!isPlaying) return;
-      if (!lastTimestamp) lastTimestamp = timestamp;
-      const dt = Math.min(0.05, (timestamp - lastTimestamp) / 1000);
-      lastTimestamp = timestamp;
+    function loop(now) {
+      if (!running) return;
+      if (paused) {
+        prevTime = now;
+        rafId = requestAnimationFrame(loop);
+        return;
+      }
 
-      if (activeMosquito) {
-        activeMosquito.age += dt;
-        activeMosquito.x += activeMosquito.vx * dt;
-        activeMosquito.y += activeMosquito.vy * dt;
-        activeMosquito.el.style.left = `${activeMosquito.x}px`;
-        activeMosquito.el.style.top = `${activeMosquito.y}px`;
+      if (!prevTime) prevTime = now;
+      const dt = Math.min(0.05, (now - prevTime) / 1000);
+      prevTime = now;
 
-        const rect = arenaEl.getBoundingClientRect();
-        const outOfBounds =
-          activeMosquito.x < -45 ||
-          activeMosquito.x > rect.width + 45 ||
-          activeMosquito.y < -45 ||
-          activeMosquito.y > rect.height + 45 ||
-          activeMosquito.age >= activeMosquito.maxAge;
+      if (mosquito) {
+        mosquito.age += dt;
+        mosquito.wigglePhase += dt * 9;
+        const perpX = -mosquito.vy / (Math.hypot(mosquito.vx, mosquito.vy) || 1);
+        const perpY = mosquito.vx / (Math.hypot(mosquito.vx, mosquito.vy) || 1);
+        const wave = Math.cos(mosquito.wigglePhase) * 28;
 
-        if (outOfBounds) {
-          handleMosquitoEscaped();
+        mosquito.x += mosquito.vx * dt + perpX * wave * dt;
+        mosquito.y += mosquito.vy * dt + perpY * wave * dt;
+
+        mosquito.el.style.left = `${mosquito.x}px`;
+        mosquito.el.style.top = `${mosquito.y}px`;
+
+        const d = Math.hypot(mosquito.x - mosquito.tx, mosquito.y - mosquito.ty);
+        if (d <= 26 || mosquito.age >= mosquito.maxAge) {
+          mosquitoEscapedToDadi();
         }
       }
 
-      animFrameId = requestAnimationFrame(gameLoop);
+      drawAimLine();
+      rafId = requestAnimationFrame(loop);
     }
 
-    function startGame() {
+    function startNewGame() {
+      prepareAudioBoost();
       score = 0;
       escaped = 0;
-      entranceIndex = 0;
-      isPlaying = true;
-      lastTimestamp = 0;
-      sleeperEmojiEl.textContent = "😴";
-      updateHud();
+      entranceTurn = 0;
+      running = true;
+      paused = false;
+      prevTime = 0;
+      setDadiCalm();
+      refreshHud();
 
-      clearCurrentMosquito();
-      clearTimeout(spawnTimer);
-      cancelAnimationFrame(animFrameId);
+      removeMosquito();
+      clearTimeout(spawnTimeout);
+      cancelAnimationFrame(rafId);
 
       startOverlay.classList.add("hidden");
-      gameOverOverlay.classList.add("hidden");
+      pauseOverlay.classList.add("hidden");
+      overOverlay.classList.add("hidden");
 
-      animFrameId = requestAnimationFrame(gameLoop);
-      scheduleNextMosquito(250);
+      rafId = requestAnimationFrame(loop);
+      queueNextMosquito(250);
     }
 
-    function endGame() {
-      isPlaying = false;
-      clearTimeout(spawnTimer);
-      cancelAnimationFrame(animFrameId);
-      clearCurrentMosquito();
-
-      gameOverStats.textContent = `Score: ${score} • Best: ${bestScore}`;
-      gameOverOverlay.classList.remove("hidden");
+    function togglePause() {
+      if (!running) return;
+      paused = !paused;
+      pauseOverlay.classList.toggle("hidden", !paused);
+      if (!paused) {
+        prevTime = 0;
+        queueNextMosquito(250);
+      } else {
+        clearTimeout(spawnTimeout);
+      }
+      drawAimLine();
     }
 
-    startBtn.addEventListener("click", startGame);
-    restartBtn.addEventListener("click", startGame);
+    function finishGame() {
+      running = false;
+      paused = false;
+      aiming = false;
+      drawAimLine();
+      clearTimeout(spawnTimeout);
+      cancelAnimationFrame(rafId);
+      removeMosquito();
+
+      overStatsEl.textContent = `Score: ${score} • Best: ${best}`;
+      overOverlay.classList.remove("hidden");
+    }
+
+    // Dash Aim Line + Hit Support
+    stage.addEventListener("pointerdown", (e) => {
+      if (!running || paused) return;
+      prepareAudioBoost();
+      const rect = stage.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+
+      aiming = true;
+      aimOrigin = { x: px, y: py };
+      aimCurrent = { x: px, y: py };
+      drawAimLine();
+
+      if (mosquito && Math.hypot(px - mosquito.x, py - mosquito.y) <= 44) {
+        smashMosquito();
+      }
+    });
+
+    stage.addEventListener("pointermove", (e) => {
+      if (!aiming || !running || paused) return;
+      const rect = stage.getBoundingClientRect();
+      aimCurrent = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      drawAimLine();
+    });
+
+    function releaseAim() {
+      if (!aiming) return;
+      if (running && !paused && mosquito) {
+        const hitTarget =
+          Math.hypot(aimCurrent.x - mosquito.x, aimCurrent.y - mosquito.y) <= 46;
+        if (hitTarget) {
+          smashMosquito();
+        }
+      }
+      aiming = false;
+      drawAimLine();
+    }
+
+    stage.addEventListener("pointerup", releaseAim);
+    stage.addEventListener("pointercancel", releaseAim);
+
+    startBtn.addEventListener("click", startNewGame);
+    pauseBtn.addEventListener("click", togglePause);
+    resumeBtn.addEventListener("click", togglePause);
+    retryBtn.addEventListener("click", startNewGame);
   </script>
 </body>
 </html>
